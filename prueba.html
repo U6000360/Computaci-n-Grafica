@@ -1,0 +1,297 @@
+  <!DOCTYPE html>
+<html>
+  <head>
+    <title>Carrito fiaumm</title>
+    <style>
+      html, body { margin: 0; padding: 0; overflow: hidden; }
+    </style>
+  </head>
+  <body>
+    <script src="js/three.js"></script>
+	<script src="js/controls/OrbitControls.js"></script>
+    <script>
+		var scene, aspect, camera, renderer, controls;
+		var startTime = Date.now();
+		var fan;
+		var tapa;
+		
+		class TRIANGLE_FAN{	
+		  constructor( Geometria, Material){
+		   this.material = Material;
+		  this.geometria = Geometria;
+			
+			console.log(this.geometria);
+			console.log(this.material);
+			
+		  }  
+		  draw(){			
+			for( var i=2; i<this.geometria.vertices.length; i++ ){
+			  this.geometria.faces.push( new THREE.Face3(0,i-1,i) );
+			}
+			this.geometria.computeFaceNormals();
+			var fanP = new THREE.Mesh( this.geometria, this.material );
+			return fanP;
+		  }
+		}
+		class TRIANGLE_STRIP{	
+		  constructor( Geometria, Material){
+		   this.material = Material;
+		  this.geometria = Geometria;
+		  console.log(this.geometria);
+			console.log(this.material);
+		  }  
+		  draw(){			
+			for( var i=2; i<this.geometria.vertices.length; i++ ){
+			  this.geometria.faces.push( new THREE.Face3(i-2,i-1,i) );
+			}
+			this.geometria.computeFaceNormals();
+			var strip = new THREE.Mesh( this.geometria, materialStrip );
+			return strip;
+		  }
+		}
+		
+		
+		init();
+		animate();
+	
+		function init(){
+			scene = new THREE.Scene();
+			aspect = window.innerWidth / window.innerHeight;
+			camera = new THREE.PerspectiveCamera( 45, aspect, 0.1, 1000);
+			renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+			controls = new THREE.OrbitControls( camera, renderer.domElement );
+            				  
+			var size = 10;
+			var arrowSize = 1;
+			var divisions = size;
+			var origin = new THREE.Vector3( 0, 0, 0 );
+			var x = new THREE.Vector3( 1, 0, 0 );
+			var y = new THREE.Vector3( 0, 1, 0 );
+		  	var z = new THREE.Vector3( 0, 0, 1 );
+			var color1 = new THREE.Color( 0xFFFFFF );
+		  	var color2 = new THREE.Color( 0x333333 );
+		  	var colorR = new THREE.Color( 0xAA3333 );
+		  	var colorG = new THREE.Color( 0x33AA33 );
+		  	var colorB = new THREE.Color( 0x333366 );
+		  
+		  	//CREAR LAS GRILLAS PARA EL ESCENARIO
+		  	var axesHelper = new THREE.AxesHelper( size );
+		  	var gridHelperXY = new THREE.GridHelper( size, divisions, color1, color1);
+		  	var gridHelperXZ = new THREE.GridHelper( size, divisions, color2, color2 );
+		  	var gridHelperYZ = new THREE.GridHelper( size, divisions, color2, color2 );
+            
+            //ROTARLAS PARA QUE QUEDEN EN EL ESPACIO ADECUADO
+            gridHelperXY.rotateOnWorldAxis ( x, THREE.Math.degToRad(90) );
+            gridHelperXZ.rotateOnWorldAxis ( y, THREE.Math.degToRad(90) );
+            gridHelperYZ.rotateOnWorldAxis ( z, THREE.Math.degToRad(90) );
+            
+            //CREAR LAS FLECHAS QUE INDICAN LOS EJES DE COORDENADAS 3D
+            var arrowX = new THREE.ArrowHelper( x, origin, arrowSize, colorR );
+            var arrowY = new THREE.ArrowHelper( y, origin, arrowSize, colorG );
+            var arrowZ = new THREE.ArrowHelper( z, origin, arrowSize, colorB );
+			
+			//CREAR ILUMINACIÓN
+            var ambient = new THREE.AmbientLight( 0xffffff, 2 );
+            scene.add( ambient );
+            
+            var pointLight = new THREE.PointLight( 0xffffff, 1, 100 );
+            pointLight.position.set( 5, 5, -5 );
+            scene.add( pointLight );
+			
+			//CREAR LAS GEOMETRÍAS
+            //Punto
+		
+			
+            var geometry = new THREE.Geometry();
+			geometry.vertices.push(
+					new THREE.Vector3( 0,  0, 0 ),
+					new THREE.Vector3( 0, -3, -1 ),
+					new THREE.Vector3(  3, -1.5, -3 ),
+					new THREE.Vector3(  3, 0.5, -4 ),
+					new THREE.Vector3(  1.5, 2, -2.5 ),
+					new THREE.Vector3(  0, 2.5, -2 ),
+					new THREE.Vector3(  -1.5, 2, -2.5 ),
+					new THREE.Vector3(  -3, 0.5, -4 ),
+					new THREE.Vector3(  -3, -1.5, -3 ),
+					new THREE.Vector3( 0, -3, -1 )
+				
+			);
+			
+			var geomejilla  = new THREE.Geometry();
+			geomejilla.vertices.push(new THREE.Vector3( 3,  -1.5, -3 ),
+					new THREE.Vector3( 0,  -3, -1 ),
+					new THREE.Vector3( 0,  -5, -4.5 ),
+					new THREE.Vector3( 4.5,  -4.5, -4.5),
+					new THREE.Vector3( 6.5,  -3, -8 ),
+					new THREE.Vector3( 8,  0, -9 ),
+					new THREE.Vector3( 5,  0.5, -4 ),
+					new THREE.Vector3( 3,  0.5, -4 )
+			);
+			var geoTabique  = new THREE.Geometry();
+				geoTabique.vertices.push(
+					new THREE.Vector3( 0,  6.5, -2 ),
+					new THREE.Vector3( 0,  2.5, -2 ),
+					new THREE.Vector3( 1.5,  2, -5.5 ),
+					new THREE.Vector3( 1.5,  5, -5.5),
+					new THREE.Vector3( 3,  6.5, -4 ),
+					new THREE.Vector3( 0,  8, -3 )
+				);
+         
+			var geoFrente  = new THREE.Geometry();
+				geoFrente.vertices.push(
+					 new THREE.Vector3( 2,  12, -11 ),
+					 new THREE.Vector3( 0,  12.5, -11 ),
+					 new THREE.Vector3( 0,  12.5, -8.5 ),
+					 new THREE.Vector3( 0,  8, -3 ),
+					 new THREE.Vector3( 3,  6.5, -4 ),
+					 new THREE.Vector3( 5,  6.5, -4 ),
+					 new THREE.Vector3( 5,  10, -10.5 )
+				
+				);
+			
+		 
+			var geoOreja = new THREE.Geometry();
+				geoOreja.vertices.push(
+					new THREE.Vector3( 5,  10, -10.5 ),
+					new THREE.Vector3( 2,  12, -11 ),
+					new THREE.Vector3( 7.5,  14.5, -15 ),
+					new THREE.Vector3( 7.5,  6.5, -9 ),
+					);
+			var geoCostado = new THREE.Geometry();
+				geoCostado.vertices.push(
+					new THREE.Vector3( 7.5,  6.5, -9 ),
+					new THREE.Vector3( 5,  10, -10.5 ),
+					new THREE.Vector3( 5,  6.5, -4 ),
+					new THREE.Vector3( 7,  5, -5.5 ),
+					new THREE.Vector3( 7,  2, -5.5 ),
+					new THREE.Vector3( 8,  3.5, -9 )
+					);
+			var geoMejilla2 = new THREE.Geometry();
+				geoMejilla2.vertices.push(
+					new THREE.Vector3( 8,  0, -9 ),
+					new THREE.Vector3( 8,  3.5, -9 ),
+					new THREE.Vector3( 7,  2, -5.5 ),
+					new THREE.Vector3( 5,  0.5, -4 )
+		
+					);
+			var geoOjos = new THREE.Geometry();
+				geoOjos.vertices.push(
+					new THREE.Vector3( 4,  3.5, -2.5 ),
+					new THREE.Vector3( 3,  6.5, -4 ),
+					new THREE.Vector3( 5,  6.5, -4 ),
+					new THREE.Vector3( 7,  5, -5.5 ),
+					new THREE.Vector3( 7,  2, -5.5 ),
+					new THREE.Vector3( 5,  0.5, -4 ),
+					new THREE.Vector3( 3,  0.5, -4 ),
+					new THREE.Vector3( 1.5,  2, -5.5 ),
+					new THREE.Vector3( 1.5,  5, -5.5),
+					new THREE.Vector3( 3,  6.5, -4 )
+		
+				);
+					
+			var geoRelleno= new THREE.Geometry();
+				geoRelleno.vertices.push(
+				new THREE.Vector3( 1.5,  2, -5.5 ),
+				new THREE.Vector3( 0,  2.5, -2 ),
+				new THREE.Vector3( 1.5,  2, -2.5 ),
+				new THREE.Vector3( 3,  0.5, -4 ));
+				
+			//CREAR LOS MATERIALES
+				var matLinea = new THREE.MeshBasicMaterial( { color: 0x84D6FF,side:THREE.DoubleSide } );
+				var matMejilla= new THREE.MeshBasicMaterial( { color: 0x65C2F0,side:THREE.DoubleSide } );
+				var matTabique= new THREE.MeshBasicMaterial( { color: 0x65D0F0,side:THREE.DoubleSide } );
+				var matFrente= new THREE.MeshBasicMaterial( { color: 0x5CBEDB,side:THREE.DoubleSide } );
+				var matOreja= new THREE.MeshBasicMaterial( { color: 0x5BB4CE,side:THREE.DoubleSide } );
+				var matCostado= new THREE.MeshBasicMaterial( { color: 0x51A8C2,side:THREE.DoubleSide } );
+				var matMejilla2= new THREE.MeshBasicMaterial( { color: 0x49B2D2,side:THREE.DoubleSide } );
+				var matOjos= new THREE.MeshBasicMaterial( { color: 0xFFFFFF,side:THREE.DoubleSide } );
+			
+			//CREACIÓN DE LOS OBJETOS
+			fan = new TRIANGLE_FAN(geometry,matLinea);	
+			fan= fan.draw();
+			
+			var mejilla = new TRIANGLE_FAN(geomejilla,matMejilla);	
+			mejilla= mejilla.draw();
+			
+			var Tabique =new TRIANGLE_FAN(geoTabique,matTabique);	
+			Tabique= Tabique.draw();
+			
+			var Frente =new TRIANGLE_FAN(geoFrente,matFrente);	
+			Frente= Frente.draw();
+			var Oreja =new TRIANGLE_FAN(geoOreja,matOreja);	
+			Oreja= Oreja.draw();
+			var Costado =new TRIANGLE_FAN(geoCostado,matOreja);	
+			Costado= Costado.draw();
+			var mejilla2 = new TRIANGLE_FAN(geoMejilla2,matMejilla2);	
+			mejilla2= mejilla2.draw();
+			var Ojos = new TRIANGLE_FAN(geoOjos,matOjos);	
+			Ojos= Ojos.draw();
+			var Relleno = new TRIANGLE_FAN(geoRelleno,matMejilla2);
+			Relleno=Relleno.draw();
+			
+			var mejilla3=mejilla.clone();
+			var Tabique2=Tabique.clone();
+			var Frente2=Frente.clone();
+			var Oreja2=Oreja.clone();
+			var mejilla4=mejilla2.clone();
+			var Costado2=Costado.clone();
+			var Espejo = new THREE.Matrix4();
+			var Relleno2=Relleno.clone();
+			var Ojos2=Ojos.clone();
+			Espejo.set( 	-1, 0, 0, 0,
+				0, 1, 0, 0, 
+				0, 0, 1, 0,
+				0, 0, 0, 1	);	
+				
+			mejilla3.applyMatrix(Espejo);
+			Frente2.applyMatrix(Espejo);
+			Tabique2.applyMatrix(Espejo);
+			Oreja2.applyMatrix(Espejo);
+			mejilla4.applyMatrix(Espejo);
+			Costado2.applyMatrix(Espejo);
+			Ojos2.applyMatrix(Espejo);
+			Relleno.applyMatrix(Espejo);
+			//AGREGAR A LA ESCENA
+		  	//scene.add( gridHelperXY );
+            scene.add( gridHelperXZ );
+		  	scene.add( arrowX );	
+		  	scene.add( arrowY );	
+		  	scene.add( arrowZ );
+			scene.add( Frente );	
+			scene.add(Tabique2);
+			scene.add(Relleno2);
+			scene.add( mejilla3 );
+			scene.add(Ojos2);
+			scene.add(fan);
+			scene.add(Costado2);
+			scene.add(mejilla4);
+			scene.add(Oreja);
+			scene.add(Oreja2);
+			scene.add(mejilla);
+			scene.add(mejilla2);
+			scene.add(Ojos);
+			scene.add(Relleno);
+			scene.add(Costado);
+			scene.add(Tabique);
+			scene.add(Frente2);
+			camera.position.x = 3;
+			camera.position.y = 4;	 
+		  	camera.position.z =  14;
+			
+		  	camera.lookAt( origin );
+			}
+    
+    function animate() {
+        render();
+		controls.update(); // required if controls.enableDamping = true, or if controls.autoRotate = true
+        requestAnimationFrame( animate );
+    }
+    
+    function render(){
+        renderer.render( scene, camera );
+    }
+    </script>
+  </body>
+</html>
