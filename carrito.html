@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Operaciones CSG</title>
+    <style>
+      html, body { margin: 0; padding: 0; overflow: hidden; }
+    </style>
+  </head>
+  <body>
+    <script src="js/three.js"></script>
+	<script src="js/controls/OrbitControls.js"></script>
+	<script src="js/csg.js"></script>
+	<script src="js/THREE.CSG.js"></script>
+    <script>
+		var scene, aspect, camera, renderer, controls;
+		class TRIANGLE_FAN{	
+		  constructor( Geometria, Material){
+		   this.material = Material;
+		  this.geometria = Geometria;
+			
+			console.log(this.geometria);
+			console.log(this.material);
+			
+		  }  
+		  draw(){			
+			for( var i=2; i<this.geometria.vertices.length; i++ ){
+			  this.geometria.faces.push( new THREE.Face3(0,i-1,i) );
+			}
+			this.geometria.computeFaceNormals();
+			var fanP = new THREE.Mesh( this.geometria, this.material );
+			return fanP;
+		  }
+		}
+		class TRIANGLE_STRIP{	
+		  constructor( Geometria, Material){
+		   this.material = Material;
+		  this.geometria = Geometria;
+		  console.log(this.geometria);
+			console.log(this.material);
+		  }  
+		  draw(){			
+			for( var i=2; i<this.geometria.vertices.length; i++ ){
+			  this.geometria.faces.push( new THREE.Face3(i-2,i-1,i) );
+			}
+			this.geometria.computeFaceNormals();
+			var strip = new THREE.Mesh( this.geometria, materialStrip );
+			return strip;
+		  }
+		}
+		init();
+		animate();
+		
+		function init(){
+			//INICIALIZACIÓN
+	        scene = new THREE.Scene();
+	        aspect = window.innerWidth / window.innerHeight;
+	        camera = new THREE.PerspectiveCamera( 75, aspect, 0.1, 1000);
+	        renderer = new THREE.WebGLRenderer();
+	        renderer.setSize( window.innerWidth, window.innerHeight );
+	        document.body.appendChild( renderer.domElement );
+			controls = new THREE.OrbitControls( camera, renderer.domElement );
+			
+			//ELEMENTOS COMUNES
+				var size = 100;
+				var arrowSize = 2;
+				var divisions = size;
+				var origin = new THREE.Vector3( 0, 0, 0 );
+				var x = new THREE.Vector3( 1, 0, 0 );
+				var y = new THREE.Vector3( 0, 1, 0 );
+				var z = new THREE.Vector3( 0, 0, 1 );
+				var color = new THREE.Color( 0x333333 );
+				var colorR = new THREE.Color( 0xAA3333 );
+				var colorG = new THREE.Color( 0x33AA33 );
+				var colorB = new THREE.Color( 0x3C8DE8);
+			
+		  	//CREAR LAS GRILLAS PARA EL ESCENARIO
+		  	var axesHelper = new THREE.AxesHelper( size );
+			scene.add( axesHelper );
+			
+		  	var gridHelperXZ = new THREE.GridHelper( size, divisions, color, color );
+			scene.add( gridHelperXZ );
+            
+            //ROTARLAS PARA QUE QUEDEN EN EL ESPACIO ADECUADO
+            gridHelperXZ.rotateOnWorldAxis ( y, THREE.Math.degToRad(90) );
+
+            //CREAR ILUMINACIÓN
+            var ambient = new THREE.AmbientLight( 0xffffff, 2 );
+            scene.add( ambient );
+			
+            var pointLight = new THREE.PointLight( 0xC501FF, 1, 100 );
+            pointLight.position.set( 15, 10, 15  );
+            scene.add( pointLight );
+			
+            var pointLight = new THREE.PointLight( 0xC501FF, 5, 100 );
+            pointLight.position.set( 15, 10, 15 );
+            scene.add( pointLight );
+			//CURVAS
+
+            
+            
+            
+			//CREAR LAS GEOMETRÍAS
+				var radio = 3;
+				var res = 20;
+				var Geocilindro= new THREE.CylinderGeometry( 2.3, 3.2, 6, 4 );
+						
+					var geoCola1 = new THREE.Geometry();
+					var punto0 = new THREE.Vector3(0,  1.5, 0 );
+					geoCola1.vertices.push( punto0 );
+					for( var i = 0; i <= res; i++){
+						var punto = new THREE.Vector3();
+						punto.x = (radio/1.6)* Math.cos( ( Math.PI * i )/ res );
+						punto.y = 0;
+						punto.z = 2+radio * Math.sin( (  Math.PI * i )/ res );
+						geoCola1.vertices.push( punto );				
+					}	
+			//CURVA PARA LA PARTE DE ATRAS
+				var curvaAtras=new THREE.CubicBezierCurve3(
+					new THREE.Vector3( (radio/1.6)* Math.cos( ( Math.PI * 0 )/ res ),0,1.9+radio * Math.sin( (  Math.PI * 0 )/ res ) ),
+					new THREE.Vector3( 1.7, 0, 6.1 ),
+					new THREE.Vector3( -2.1, 0, 6.1),
+					new THREE.Vector3((radio/1.6)* Math.cos( ( Math.PI * res )/ res ), 0, 1.2+radio * Math.sin( (  Math.PI * res )/ res ) )
+				
+				);
+				var curvaAtras2=new THREE.CubicBezierCurve3(
+					new THREE.Vector3( 0.39+(radio/1.6)* Math.cos( ( Math.PI * 0 )/ res ),-3,2.25+radio * Math.sin( (  Math.PI * 0 )/ res ) ),
+					new THREE.Vector3( 1.5, -3, 6.2 ),
+					new THREE.Vector3( -1.8, -3, 6.2),
+					new THREE.Vector3(-0.55+(radio/1.6)* Math.cos( ( Math.PI * res )/ res ), -3, 1.59+radio * Math.sin( (  Math.PI * res )/ res ) )
+				
+				);
+					var GeoPunto= new THREE.Geometry();
+			//CREAR UNA GEOMETRIA PARA ALMACENAR LOS PUNTOS QUE GENERA EL BEZIER
+				
+					for(var i=0; i<40; i++){
+						var point = curvaAtras.getPoint( i/40 );
+						GeoPunto.vertices.push( point );
+					}
+
+			//ESTE CICLO TAMBIEN SE HACE PARA LA SEGUNDA CURVA
+					for(var i=0; i<40; i++){
+						var point = curvaAtras2.getPoint( i/40 );
+						GeoPunto.vertices.push( point );
+					}
+				
+				//CREAR LAS CARAS DE LAS SUPERFICIES
+					for(var i=0; i<39; i++){
+							var face1 = new THREE.Face3( i, i+1, i+40 );
+							GeoPunto.faces.push( face1 );
+							var face2 = new THREE.Face3( i+1, i+40, i+41 );
+							GeoPunto.faces.push( face2 );
+					}
+					GeoPunto.computeFaceNormals();
+		
+			//LLANTAS
+					var GeoEsfera= new THREE.SphereGeometry( 2, 32, 32 );
+					var GeoCilindro1= new THREE.CylinderGeometry( 1.9, 1.5, 5, 32 );
+					var GeoLLantas= new THREE.CylinderGeometry(3,3, 3, 32 );
+					var GeoLLantas1= new THREE.CylinderGeometry(2,1, 1, 32 );	
+
+			
+			
+			//CREAR LOS MATERIALES
+				var matLLantas = new THREE.MeshBasicMaterial( {color: 0xC1FFED} );
+				var material1 = new THREE.MeshStandardMaterial( { color: colorB, metalness: 0.5, roughness: 0.3} );
+				var matrines= new THREE.MeshStandardMaterial( {color: 0x1C1C1F,roughness: 10} );
+				var matrines2= new THREE.MeshStandardMaterial( {color: 0xE7E7E7,roughness: 0.3} );
+				var materialBombillo=	new THREE.MeshStandardMaterial( {color: 0xFFBA8A,roughness: 0.3} );
+					material1.side = THREE.DoubleSide;
+					matLLantas.side = THREE.DoubleSide;
+			//CREAR LAS MALLAS
+				
+				var fanCola = new TRIANGLE_FAN(geoCola1,material1);	
+				var Base = new THREE.Mesh( Geocilindro,material1 );	
+				var SuperficieAtras= new THREE.Mesh(GeoPunto,material1);
+				var EsferaLLantas = new THREE.Mesh( GeoEsfera, matLLantas );
+				var cilindroLLantas= new THREE.Mesh( GeoCilindro1, material1 );
+				fanCola= fanCola.draw();
+				var Rines1=new THREE.Mesh( GeoLLantas, matrines);
+				var Rines2=new THREE.Mesh( GeoLLantas1, material1);
+				var Rines3=new THREE.Mesh( GeoEsfera, matrines2);
+				var Rines4=Rines1.clone();
+				var Rines5=new THREE.Mesh( GeoLLantas, matrines2);
+				var Rines6= Rines2.clone();
+				var DecoracionAtras= SuperficieAtras.clone();
+				var DecoracionAtras2= cilindroLLantas.clone();
+				var DecoracionAtras2Clon=cilindroLLantas.clone();
+				var Bombillos=EsferaLLantas.clone();
+				
+				
+			//TANSFORMACIONES
+					DecoracionAtras2Clon.applyMatrix( new THREE.Matrix4().makeScale(0.5,2,0.5) );
+					Rines6.applyMatrix( new THREE.Matrix4().makeScale(0.9,1,0.9) );
+					Rines5.applyMatrix( new THREE.Matrix4().makeScale(0.5,0.8,0.5) );		
+					Rines4.applyMatrix( new THREE.Matrix4().makeScale(0.09,1,0.09) );			
+					Rines3.applyMatrix( new THREE.Matrix4().makeScale(0.7,0.7,0.7) );
+					Rines3.translateY(0.5);
+					Rines6.translateY(1);
+					Rines2.translateY(1);
+					Rines4.translateY(1.5);
+					cilindroLLantas.rotateX(3.14/2);
+					EsferaLLantas.translateY(1);
+					fanCola.rotateY(3.14/4);
+					Base.translateY(3);
+					Base.rotateY(3.14/4);
+				
+			
+			
+			//CONVERTIR A CSG
+					
+					var Rines1CGS=THREE.CSG.fromMesh( Rines1 );
+					var Rines2CGS=THREE.CSG.fromMesh( Rines2 );
+					var Rines3CGS=THREE.CSG.fromMesh( Rines3 )
+					var Rines4CGS=THREE.CSG.fromMesh( Rines4 );
+					var Rines5CGS=THREE.CSG.fromMesh( Rines5 );
+					var Rines6CGS=THREE.CSG.fromMesh( Rines6 );
+					var BaseCGS=  THREE.CSG.fromMesh( Base );
+					var cilindroLLantasCSG = THREE.CSG.fromMesh( cilindroLLantas );
+					var EsferaLLantasCSG = THREE.CSG.fromMesh( EsferaLLantas );
+					var DecoracionAtras2CSG=THREE.CSG.fromMesh( DecoracionAtras2 );
+					var DecoracionAtras2ClonCSG=THREE.CSG.fromMesh( DecoracionAtras2Clon );
+				
+			//APLICAR LAS OPERACIONES
+				
+				var resultado1 = EsferaLLantasCSG.subtract( cilindroLLantasCSG );
+				var resultado2 = BaseCGS.subtract( cilindroLLantasCSG );
+				var RinAdentro = Rines2CGS.subtract( Rines6CGS );
+				var RinF= Rines1CGS.subtract( Rines2CGS );
+				var RinCentro=Rines3CGS.union(Rines5CGS).subtract(Rines4CGS);
+				var Decoracion=DecoracionAtras2CSG.subtract(DecoracionAtras2ClonCSG);
+			
+			//CONVERTIR A MALLA DE THREE JS NUEVAMENTE
+					
+					Rines2=THREE.CSG.toMesh( RinAdentro );
+					Rines1=THREE.CSG.toMesh( RinF );
+					Rines3=THREE.CSG.toMesh( RinCentro );
+					EsferaLLantas = THREE.CSG.toMesh( resultado1 );
+					Base=THREE.CSG.toMesh( resultado2 );
+					DecoracionAtras2= THREE.CSG.toMesh( Decoracion );
+			//Materiales
+					Bombillos.material = materialBombillo;
+					Rines1.material = matrines;
+					Rines3.material = matrines2;
+					Rines2.material = material1;
+					EsferaLLantas.material = matLLantas;
+					Base.material = material1;
+					DecoracionAtras.material = matLLantas;
+					DecoracionAtras2.material = matrines;
+			//he thick BOIIIIIIIIIIIIIIII
+				var Bombillos2=Bombillos.clone();
+				var EsferaLLantas2=EsferaLLantas.clone();
+				EsferaLLantas2.translateZ(-1.5);
+				EsferaLLantas.translateZ(1.5);
+				Base.add(fanCola);
+				fanCola.add(SuperficieAtras);
+				fanCola.add(DecoracionAtras2);
+				fanCola.add(DecoracionAtras);
+				fanCola.add(Bombillos);
+				fanCola.add(Bombillos2);
+				Rines1.add(Rines2);
+				Rines1.add(Rines3)
+				
+				var LLantas1=Rines1.clone();
+				var LLantas2=Rines1.clone();
+				var LLantas3=Rines1.clone();
+				
+				LLantas2.add(LLantas3);
+			//MAS TRANSFORMACIOES AYUDA PLS
+				
+				Rines1.applyMatrix( new THREE.Matrix4().makeScale(0.5,0.5,0.5) );
+				LLantas1.applyMatrix( new THREE.Matrix4().makeScale(0.5,0.5,0.5) );
+				LLantas2.applyMatrix( new THREE.Matrix4().makeScale(0.4,0.25,0.4) );
+				DecoracionAtras.applyMatrix( new THREE.Matrix4().makeScale(1.19,0.25,1.2) );
+				DecoracionAtras2.applyMatrix( new THREE.Matrix4().makeScale(0.15,0.15,0.15) );
+				Bombillos.applyMatrix( new THREE.Matrix4().makeScale(0.25,0.4,0.25) );
+				Bombillos2.applyMatrix( new THREE.Matrix4().makeScale(0.25,0.4,0.25) );
+				
+				fanCola.rotateY(3.14/4);
+				Rines1.rotateX(-3.14/2);
+				LLantas2.rotateX(3.14/2);
+				LLantas3.rotateX(-3.14);
+				
+				
+				
+				Bombillos.translateX(1.7);
+				Bombillos.translateZ(3);
+				Bombillos.translateY(-1);
+				Bombillos2.translateX(-1.7);
+				Bombillos2.translateZ(3);
+				Bombillos2.translateY(-1);
+				DecoracionAtras2.rotateX(3.14/2);
+				DecoracionAtras2.translateY(4.7);
+				DecoracionAtras2.translateZ(0.55);
+				DecoracionAtras.translateY(-2.5);
+				DecoracionAtras.translateZ(-0.85);
+				fanCola.translateY(3);
+				Rines1.translateY(2);
+				LLantas2.translateX(3.5);
+				LLantas2.translateZ(0.3);
+				LLantas3.translateY(0.5);
+				LLantas1.rotateX(3.14/2);
+				LLantas1.translateY(2);
+				Bombillos.rotateX(-3.14/4);
+				Bombillos2.rotateX(-3.14/4);
+			//AGREGAR A LA ESCENA LOS DIFERENTES ELEMENTOS
+				scene.add(Rines1);
+				scene.add(LLantas1);
+				scene.add(LLantas2);
+				scene.add(Base);
+				
+				
+				scene.add(EsferaLLantas);
+				scene.add(EsferaLLantas2);
+			
+				
+				
+			camera.position.x = 12;
+			camera.position.y = 12;
+		  	camera.position.z = 5;
+			camera.lookAt( origin );
+		}
+		function animate(){
+			requestAnimationFrame( animate );
+			controls.update();
+			render();
+		}
+		function render(){
+			renderer.render( scene, camera );
+		}
+    </script>
+  </body>
+</html>
