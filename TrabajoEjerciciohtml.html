@@ -1,0 +1,207 @@
+ <!DOCTYPE html>
+<html>
+  <head>
+    <title>TRABAJO RAYCASTING. Valentina Cortes, Daniela Rivera, Diego Niño</title>
+    <style>
+      html, body { margin: 0; padding: 0; overflow: hidden; }
+    </style> 
+  </head>
+  <body>
+    <script src="js/three.js"></script>
+    <script src="js/controls/OrbitControls.js"></script>
+    <script src='js/libs/dat.gui.min.js'></script>
+    <script>
+		var scene, aspect, camera, camera2, camera3, renderer, controls;
+        var mapWidth = 320*2, mapHeight = 240*2;
+        var w = window.innerWidth, h = window.innerHeight;
+        var frustumSize = 5;
+		var startTime = Date.now();
+		var raycaster= new THREE.Raycaster();;
+		var vector3;
+		var visualCam2 = new THREE.Vector3();
+		var Objetos=[];
+		var ArrayColores=[];
+		var visualCam2 
+		var geoCubo2;
+		var geoCuboEaluar;
+		
+		init();
+		animate();
+	
+		function init(){
+			scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0xAAAAAA );
+			aspect = window.innerWidth / window.innerHeight;
+			camera = new THREE.PerspectiveCamera( 45, aspect, 0.1, 1000);
+			renderer = new THREE.WebGLRenderer({antialias: true});
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+			controls = new THREE.OrbitControls( camera, renderer.domElement );
+			
+			
+			
+			
+			
+			//AYUDAR A VISUALIZAR LA ESCENA
+				var arrowSize = 100;
+				var arrowX = new THREE.ArrowHelper( new THREE.Vector3( 1, 0, 0 ), new THREE.Vector3( 0, 0, 0 ), arrowSize, 0xAA3333 );
+				var arrowY = new THREE.ArrowHelper( new THREE.Vector3( 0, 1, 0 ), new THREE.Vector3( 0, 0, 0 ), arrowSize, 0x33AA33 );
+				var arrowZ = new THREE.ArrowHelper( new THREE.Vector3( 0, 0, 1 ), new THREE.Vector3( 0, 0, 0 ), arrowSize, 0x333366 );
+				scene.add(arrowX);
+				scene.add(arrowY);
+				scene.add(arrowZ);
+			
+			//CREAR UNA SEGUNDA CAMARA
+				camera2= new THREE.PerspectiveCamera( 45, (1.33), 0.1, 50);
+				//var C2Helper= new THREE.CameraHelper( camera2 );
+				//scene.add(C2Helper);
+			//CREAR UN VECTOR CON LA DIRECCIÓN DE LA CAMARA
+				
+				camera2.getWorldDirection( visualCam2 );
+				console.log(visualCam2);
+			//CREAR CAMARA 3
+				camera3= new THREE.PerspectiveCamera( 45, 1.33, 0.1,100);
+				//var C2Helper= new THREE.CameraHelper( camera2 );
+				//scene.add(C2Helper);
+				camera3.position.x = 60;
+				camera3.position.y = 0;
+				camera3.position.z = -25;
+				camera3.lookAt( 0,0,-25);
+				
+				
+			
+			//CREAR GEOMETRIAS
+				var geoCono = new THREE.ConeGeometry( 1, 3, 5 );
+				var geoCubo = new THREE.CylinderGeometry( 1, 1, 5, 10 );
+				 geoCuboEaluar = new THREE.BoxGeometry(1,1,0);
+				 geoCubo2 = new THREE.BoxGeometry(5,5,5);
+			//CREAR MATERIALES
+				var matCono = new THREE.MeshBasicMaterial( {color: 0xFFD4FC} );
+				var matCubo = new THREE.MeshBasicMaterial( {color: 0x0000ff} );
+				var matEsfera = new THREE.MeshBasicMaterial( {color: 0x36A5BD} );
+	
+			
+				var matLinea = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+			//CREAR OBJETOS 
+			   var cono= new THREE.Mesh( geoCono, matCono );
+			   var esfera = new THREE.Mesh( geoCubo, matEsfera );
+			   var cubo = new THREE.Mesh( geoCubo2, matCubo );
+			   var cubo2=cubo.clone();
+			   var esfera2=esfera.clone();
+			   var cubo3=cubo.clone();
+			   var cono2=cono.clone();
+			   var cono3=cono.clone();
+			   
+			 //TRANSFORMACIONES
+			 cono.position.z=-10;
+			 cono2.position.z=-10;
+			 cono2.position.x=-5;
+			  cono2.position.y=-5;
+			   cono3.position.y=-10;
+				cubo3.position.z=-20;
+				cubo.position.z=-15;
+				cubo.position.x=-15;
+				cubo2.position.z=-49;
+				cubo2.position.x=-14;
+				esfera.position.z=-25;
+				esfera2.position.z=-10;
+				esfera2.position.x=3
+				//esfera.position.x=2;
+
+			//CREAR UN ARREGLO CON LOS OBJETOS
+				Objetos.push(cubo3);
+				Objetos.push(cubo);
+				Objetos.push(cubo2);
+				Objetos.push(esfera);
+				Objetos.push(esfera2);
+				Objetos.push(cono);
+				Objetos.push(cono2);
+				Objetos.push(cono3);
+				
+				
+				
+			//AÑADIR A ESCENA
+				scene.add(cubo3);
+				scene.add(cono);
+				scene.add(cono2);
+				scene.add(cono3);
+				scene.add(cubo)
+				scene.add(cubo2)
+				scene.add(esfera)
+				scene.add(esfera2);
+				camera.lookAt( origin );
+				camera.position.x = 40;
+				camera.position.y = 0;
+				camera.position.z = -40;
+				
+				
+			//CREAR UN RAYCASTER
+			
+				
+				
+				
+		}
+			
+		
+		function animate() {
+			requestAnimationFrame( animate );
+			controls.update(); // required if controls.enableDamping = true, or if controls.autoRotate = true
+			render();
+		}
+        function render() {
+		//Raycaster
+				var raycOrigen= new THREE.Vector3(0,0,0);//Coordenadas de origen
+				var raycDireccion= new THREE.Vector3(0,0,-50);//Coordenadas de origen
+				var raycaster = new THREE.Raycaster(raycOrigen,raycDireccion.normalize());
+				var intersects = raycaster.intersectObjects( Objetos );
+				
+				//console.log(Objetos);
+				console.log(intersects);
+				for ( var i = 0; i < intersects.length; i++ ) {
+					for(var j=0;j<intersects[ i ].object.geometry.faces.length-1;j++){
+					
+						if(visualCam2.dot(intersects[ i ].object.geometry.faces[j].normal)>=0){
+							//console.log("Aiuda");
+							intersects[ i ].object.geometry.faces.splice(j,1);
+							intersects[ i ].object.geometry.elementsNeedUpdate=true;
+							intersects[ i ].object.material.color.toArray(ArrayColores);
+							var matEvaluar= new THREE.MeshBasicMaterial();
+							matEvaluar.color.fromArray(ArrayColores);
+							var cuboEvaluar= new THREE.Mesh(geoCuboEaluar,matEvaluar);
+							console.log(ArrayColores);
+							scene.add(cuboEvaluar);
+							cuboEvaluar.position.x=i;
+							}
+					}
+					
+				}
+				
+		    renderer.setViewport( 0, 0, w, h );
+            renderer.setScissor( 0, 0, w, h );
+            renderer.render( scene, camera );
+		//UBICAR CAMARA 2 EN PANTALLA
+			renderer.setViewport( 10, 10, mapWidth/2, mapHeight/2 );
+            renderer.setScissor( 10, 10, mapWidth/2, mapHeight/2 );
+            renderer.setScissorTest( true );
+            renderer.render( scene, camera2 );
+		//UBICAR CAMARA 3 EN PANTALLA
+			renderer.setViewport( 10, (mapHeight*3)/2, mapWidth/2, mapHeight/2 );
+            renderer.setScissor( 10,  (mapHeight*3)/2, mapWidth/2, mapHeight/2 );
+            renderer.setScissorTest( true );
+           
+		
+            renderer.render( scene, camera3 );
+          
+
+		}
+    </script>
+  </body>
+</html>
+
+
+
+
+
+
+
+
