@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Parcial 2 Valentina Cortés</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #FFEDED;
+				color: #444;
+			}
+			a {
+				color: #08f;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - voxel painter - webgl<br>
+			<strong>click</strong>: Añadir voxel, <strong>shift + click</strong>: Quitar voxel<br>
+			<strong>Interacción por teclado:</strong>
+				1: Rectangulo1
+				2: Cubo
+				3: Rectangulo 2
+				4: Esquina
+				5: Poligono
+				6: Cilindro
+				7: Toroide<br>
+			<strong>RotarFicha:</strong>
+				X: Rotar en el eje X
+				Y: Rotar en el eje Y
+				Z: Rotar en el eje Z
+				<br>
+				
+		</div>
+		<script src="js/three.js"></script>
+		<script src="js/controls/OrbitControls.js"></script>
+	   <script src="js/three.module.js"></script>
+	   <script src="js/csg.js"></script>
+		<script src="js/THREE.CSG.js"></script>
+		<script type="module">
+
+			
+
+			var camera, scene, renderer,controls;
+			var plane;
+			var mouse, raycaster, isShiftDown = false;
+		
+			
+			//Objetos a la final solo necesito uno :D
+				var voxel
+				var rollOverMesh, rollOverMaterial;
+				var cubeGeo, cubeMaterial;
+				var Visualizacion;
+				var rectanguloConexion;
+				var Cubo; 
+				var Rectanglo;
+				var Cilindro;
+				var Esfera;
+				var Poligono;
+				var Anillo;
+				var Esquina;
+			//Geometrias
+				var rollOverGeo;
+				var GeorectanguloConexión;
+				var GeoCubo;
+				var GeoRectanglo;
+				
+				var GeoCilindro;
+				var GeoAnillo ;
+				var sphereGeometry;
+			
+			//Materiales
+				var material1;
+				var material2;
+				var material3;
+				var material4;
+				var material5;
+				var material6;
+				var material7;
+			//Condicionales
+				var RotarX=false;
+				var RotarY=false;
+				var RotarZ=false;
+				var Numero1 = false;
+				var Numero2 = false;
+				var Numero3 = false;
+				var Numero4 = false;
+				var Numero5 = false;
+				var Numero6 = false;
+				var Numero7 = false;
+			
+
+			var objects = [];
+
+			init();
+			animate();
+			render();
+
+			function init() {
+
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+				camera.position.set( 500, 800, 1300 );
+				camera.lookAt( 0, 0, 0 );
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xFFEDED );
+				//Eventos ed teclado
+								var onKeyDown = function ( event ) {
+								switch ( event.keyCode ) {
+									case 49: // Retangulo pequeño
+										Numero1 = true;
+										Numero2 = false;
+										Numero3 = false;
+										Numero4 = false;
+										Numero5 = false;
+										Numero6 = false;
+										Numero7 = false;
+										
+										break;
+									case 50: // Cubo
+										Numero2 = true;
+										Numero1 = false;
+										Numero3 = false;
+										Numero4 = false;
+										Numero5 = false;
+										Numero6 = false;
+										Numero7 = false;
+										break;
+									case 51: // Rectagulo
+										Numero3 = true;
+										Numero1 = false;
+										Numero2 = false;
+										Numero4 = false;
+										Numero5 = false;
+										Numero6 = false;
+										Numero7 = false;
+										break;
+									case 52: // Esquina
+										Numero4 = true;
+										Numero1 = false;
+										Numero2 = false;
+										Numero3 = false;
+										Numero7 = false;
+										Numero5 = false;
+										Numero6 = false;
+										break;
+									case 53: // Poligono
+										Numero5 = true;
+										Numero1 = false;
+										Numero2 = false;
+										Numero3 = false;
+										Numero4 = false;
+										Numero6 = false;
+										Numero7 = false;
+										
+										break;
+									case 54: // Cilindro
+										Numero6 = true;
+										Numero1 = false;
+										Numero2 = false;
+										Numero3 = false;
+										Numero4 = false;
+										Numero5 = false;
+										Numero7 = false;
+										break;
+									case 55: // Anillo
+										Numero1 = false;
+										Numero2 = false;
+										Numero3 = false;
+										Numero4 = false;
+										Numero5 = false;
+										Numero6 = false;
+										Numero7 = true;
+										break;
+									case 88:
+										RotarX=true;
+										break;
+									case 89:
+										RotarY=true;
+										break;
+									case 90:
+										RotarZ=true;
+										break;
+									
+								}
+							};
+							var onKeyUp = function ( event ) {
+								switch ( event.keyCode ) {
+									case 88:
+										RotarX=false;
+										break;
+									case 89:
+										RotarY=false;
+										break;
+									case 90:
+										RotarZ=false;
+										break;
+									 }
+							
+							}
+				document.addEventListener( 'keydown', onKeyDown, false );
+				document.addEventListener( 'keyup', onKeyUp, false );
+
+				// roll-over helpers
+
+				rollOverGeo = new THREE.BoxBufferGeometry( 50, 50, 50 );
+				rollOverMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
+				rollOverMesh = new THREE.Mesh( rollOverGeo, rollOverMaterial );
+				scene.add(rollOverMesh);
+				
+				//INICIALIZACIÓN
+						//CREAR LAS GEOMETRÍAS
+							GeorectanguloConexión= new THREE.BoxGeometry( 50, 50, 100 );
+							GeoCubo = new THREE.BoxGeometry( 100, 50, 100 );
+							GeoRectanglo= new THREE.BoxGeometry( 50, 50, 250 );
+							GeoCilindro = new THREE.CylinderGeometry( 50, 50, 100, 32 );
+							GeoAnillo = new THREE.TorusGeometry(   37.5, 15, 16, 100 );
+							sphereGeometry = new THREE.SphereGeometry( 50, 32, 32 );
+						//CREAR LOS MATERIALES
+			
+							 material1 = new THREE.MeshStandardMaterial( { color: 0xFFBA8A, metalness: 0.5, roughness: 0.1 } );//Naranja
+							 material2 = new THREE.MeshStandardMaterial( { color: 0xD1FFC8, metalness: 0.5, roughness: 0.1 } );//verde
+							 material3 = new THREE.MeshStandardMaterial( { color: 0xC8D4FF, metalness: 0.5, roughness: 0.1 } );//lila
+							 material4 = new THREE.MeshStandardMaterial( { color:0xE6C8FF, metalness: 0.5, roughness: 0.1 } );//Purpura
+							 material5 = new THREE.MeshStandardMaterial( { color: 0xFFC8D4, metalness: 0.5, roughness: 0.1 } );//rosa
+							 material6 = new THREE.MeshStandardMaterial( { color:0xCEFEFE, metalness: 0.5, roughness: 0.1 } );//Azul
+							 material7 = new THREE.MeshStandardMaterial( { color: 0xB7FFED, metalness: 0.5, roughness: 0.1 } );//Agua marina
+							 
+						//CREAR LAS MALLAS NO SON NECESARIOS
+							rectanguloConexion= new THREE.Mesh( GeorectanguloConexión, material1 );
+							Cubo= new THREE.Mesh( GeoCubo, material2 );
+							Rectanglo= new THREE.Mesh( GeoRectanglo, material3 );
+							Cilindro= new THREE.Mesh( GeoCilindro, material4 );
+							Anillo= new THREE.Mesh( GeoAnillo, material5 );
+							Esfera= new THREE.Mesh( sphereGeometry, material6 );
+							
+							Anillo.rotateX(3.14/2);
+							
+								
+								//CLONAR Y ACOMODAR OBJETOS PARA CSG
+									var rectanguloConexion2=rectanguloConexion.clone();
+										rectanguloConexion2.rotateY(3.14/2);
+										rectanguloConexion2.applyMatrix( new THREE.Matrix4().makeTranslation(25,0,-25) );
+								//CONVERTIR A CSG
+									var rectanguloConexionCSG = THREE.CSG.fromMesh( rectanguloConexion );
+									var rectanguloConexion2CSG = THREE.CSG.fromMesh( rectanguloConexion2 );
+								//APLICAR LAS OPERACIONES
+									var esquinasCSG = rectanguloConexionCSG.union( rectanguloConexion2CSG );
+								//CONVERTIR A THREE
+									Esquina = THREE.CSG.toMesh( esquinasCSG );//objeto de cgs
+									Esquina.material = material7;
+								//REUTILIZAR OBJETOS
+										var Esquina2=Esquina.clone();
+										var Cubo2=Cubo.clone();
+											Cubo2.applyMatrix( new THREE.Matrix4().makeScale(0.70,1,0.70) );
+											Cubo2.translateX(25);
+											Cubo2.rotateX(3.14/2);
+											Cubo2.rotateY(3.14/4);
+											Esquina2.rotateX(-3.14/2);
+								//REUTILIZAR CSG
+										var Esquina2oCSG= THREE.CSG.fromMesh( Esquina2 );
+										var Cubo2CSG= THREE.CSG.fromMesh( Cubo2 );
+								//OPERACIONES
+										var PoligonoCGS=Esquina2oCSG.union( Cubo2CSG );
+									
+								//AGREGAR A LA ESCENA LOS DIFERENTES ELEMENTOS
+										Poligono = THREE.CSG.toMesh( PoligonoCGS );//OBJETO DE CGS
+										Poligono.material = material7;
+											
+										
+				
+				
+				//VISUALIZACIÓN
+					
+					rectanguloConexion= new THREE.Mesh( GeorectanguloConexión, rollOverMaterial );
+					
+				// cubes
+
+				cubeGeo = new THREE.BoxBufferGeometry( 50, 50, 50 );
+				cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xfeb74c } );
+
+				// grid
+
+				var gridHelper = new THREE.GridHelper( 1000, 20 );
+				scene.add( gridHelper );
+
+				//
+
+				raycaster = new THREE.Raycaster();
+				mouse = new THREE.Vector2();
+
+				var geometry = new THREE.PlaneBufferGeometry( 1000, 1000 );
+				geometry.rotateX( - Math.PI / 2 );
+
+				plane = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { visible: false } ) );
+				scene.add( plane );
+
+				objects.push( plane );
+
+				// lights
+
+				var ambientLight = new THREE.AmbientLight( 0xffffff,1);
+				scene.add( ambientLight );
+
+				var directionalLight = new THREE.DirectionalLight(  0xffffff, 1, 100);
+				directionalLight.position.set( 1, 0.75, 0.5 ).normalize();
+				scene.add( directionalLight );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+				document.addEventListener( 'keydown', onDocumentKeyDown, false );
+				document.addEventListener( 'keyup', onDocumentKeyUp, false );
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function onDocumentMouseMove( event ) {
+
+				event.preventDefault();
+
+				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+
+				raycaster.setFromCamera( mouse, camera );
+
+				var intersects = raycaster.intersectObjects( objects );
+
+				if ( intersects.length > 0  ) {
+
+					var intersect = intersects[ 0 ];
+					
+
+					rollOverMesh.position.copy( intersect.point ).add( intersect.face.normal );
+					rollOverMesh.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
+					
+					//rectanguloConexion.geometry=cubeGeo;
+					
+					//rectanguloConexion.position.copy( intersect.point ).add( intersect.face.normal );
+					//rectanguloConexion.floor().multiplyScalar( 50 ).addScalar( 25);
+					
+				}
+				
+
+				render();
+
+			}
+
+			function onDocumentMouseDown( event ) {
+
+				event.preventDefault();
+
+				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+
+				raycaster.setFromCamera( mouse, camera );
+
+				var intersects = raycaster.intersectObjects( objects );
+
+				if ( intersects.length > 0 ) {
+
+					var intersect = intersects[ 0 ];
+
+					// delete cube
+
+					if ( isShiftDown ) {
+
+						if ( intersect.object !== plane ) {
+
+							scene.remove( intersect.object );
+
+							objects.splice( objects.indexOf( intersect.object ), 1 );
+
+						}
+
+						// create cube
+
+					} else {
+						if(RotarX && object[1]==null){
+							voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
+							voxel.position.copy( intersect.point ).add( intersect.face.normal );
+							voxel.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
+							voxel.rotateX(3.14/2);
+							scene.add( voxel );
+							
+							objects.push( voxel );
+						
+						}
+						else{
+							voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
+							voxel.position.copy(intersect.point).add( intersect.face.normal );
+							voxel.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 25 );
+							scene.add( voxel );
+							
+							objects.push( voxel );
+						
+						}
+
+						
+
+					}
+
+					render();
+
+				}
+
+			}
+
+			function onDocumentKeyDown( event ) {
+
+				switch ( event.keyCode ) {
+
+					case 16: isShiftDown = true; break;
+
+				}
+
+			}
+
+			function onDocumentKeyUp( event ) {
+
+				switch ( event.keyCode ) {
+
+					case 16: isShiftDown = false; break;
+
+				}
+
+			}
+
+			function animate(){
+			requestAnimationFrame( animate );
+			controls.update();
+			render();	
+		}
+			function render() {
+			var VELX=0;
+				if(Numero1){
+					rollOverMesh.geometry=GeorectanguloConexión;
+					voxel.geometry=GeorectanguloConexión;
+					voxel.material=material1;
+					
+				}
+				if(Numero2){
+					rollOverMesh.geometry=GeoCubo;
+					voxel.geometry=GeoCubo
+					voxel.material=material2;
+				}
+				if(Numero3){
+					rollOverMesh.geometry=GeoRectanglo;
+					voxel.geometry=GeoRectanglo
+					voxel.material=material3;
+				}
+				if(Numero4){
+					rollOverMesh.geometry=Esquina.geometry;
+					voxel.geometry=Esquina.geometry
+					voxel.material=material4;
+					
+				}
+				if(Numero5){
+					rollOverMesh.geometry=Poligono.geometry;
+					voxel.geometry=Poligono.geometry;
+					voxel.material=material5;
+				}
+				if(Numero6){
+					rollOverMesh.geometry=GeoCilindro;
+					voxel.geometry=GeoCilindro;
+					voxel.material=material5;
+				}
+				if(Numero7){
+					rollOverMesh.geometry=GeoAnillo;
+					voxel.geometry=GeoAnillo;
+					voxel.material=material5;
+					
+				}
+				if(RotarX){
+				VELX=0.01;
+							/*if(objects[1]==null){
+									rollOverMesh.rotateX(VELX);
+								}
+							else{
+									voxel.rotateX(VELX);	
+									
+								}*/
+					
+					voxel.rotateX(VELX);
+					
+					
+				}
+				if(RotarY){
+					VELX=0.01;
+						voxel.rotateY(VELX);	
+				}
+				if(RotarZ){
+					VELX=0.01;
+						voxel.rotateZ(VELX);	
+				}
+					
+				
+			
+				
+				
+				renderer.render( scene, camera );
+
+			}
+			
+
+					
+			
+			
+			
+			
+
+		</script>
+
+	</body>
+</html>
